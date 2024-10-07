@@ -1,0 +1,18 @@
+name: Test Goat
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - name: Run the proxy
+        run: docker compose up -d
+      - name: Verify the proxy is running with a custom CA
+        run: curl -I --cacert certs/root.crt https://localhost:8443
+      - name: Run the tests
+        run: go test .
