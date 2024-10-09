@@ -44,6 +44,9 @@ openssl x509 -req -in certs/proxy-goat-internal.csr -CA certs/root.crt -CAkey ce
 
 # Create a combined cert
 cat certs/proxy-goat-internal.crt certs/root.crt > certs/proxy-goat-internal-bundle.crt
+
+# Generate a CA file for Pynt
+cat certs/root.crt certs/root.key > certs/root-with-key.pem
 ```
 
 ### Using a Custom CA for HTTP(s) calls in in Go

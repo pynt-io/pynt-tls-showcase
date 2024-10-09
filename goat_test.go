@@ -47,6 +47,7 @@ func sendRequest(req *http.Request, authorization string) (*http.Response, error
 	}
 	transport := &http.Transport{
 		TLSClientConfig: config,
+		Proxy:           http.ProxyFromEnvironment,
 	}
 	client := &http.Client{Transport: transport}
 	if authorization != "" {
