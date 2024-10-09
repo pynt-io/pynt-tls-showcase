@@ -1,6 +1,6 @@
 name: Test Goat
 on:
-  push:
+  workflow_dispatch:
 
 jobs:
   test:
