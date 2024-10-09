@@ -10,7 +10,7 @@ C  = US
 ST = California
 L  = San Francisco
 O  = My Company
-CN = localhost
+CN = goat.proxy
 
 [ req_ext ]
 subjectAltName = @alt_names
@@ -19,4 +19,4 @@ subjectAltName = @alt_names
 subjectAltName = @alt_names
 
 [ alt_names ]
-DNS.1 = localhost
+DNS.1 = proxy.goat.internal

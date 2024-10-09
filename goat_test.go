@@ -22,7 +22,7 @@ var (
 	larsUID    string
 )
 
-const baseURL = "https://localhost:8443"
+const baseURL = "https://proxy.goat.internal:8443"
 
 type loginResponse struct {
 	Token string `json:"token"`
@@ -45,7 +45,9 @@ func sendRequest(req *http.Request, authorization string) (*http.Response, error
 		InsecureSkipVerify: false,
 		RootCAs:            rootCAs,
 	}
-	transport := &http.Transport{TLSClientConfig: config}
+	transport := &http.Transport{
+		TLSClientConfig: config,
+	}
 	client := &http.Client{Transport: transport}
 	if authorization != "" {
 		req.Header.Set("Authorization", "Bearer "+authorization)

@@ -10,9 +10,11 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
-      - name: Run the proxy
-        run: docker compose up -d
+      - name: Setup and start the proxy
+        run: |
+          echo '127.0.0.1 proxy.goat.internal' | sudo tee -a /etc/hosts
+          docker compose up -d
       - name: Verify the proxy is running with a custom CA
-        run: curl -I --cacert certs/root.crt https://localhost:8443
+        run: curl --retry-all-errors --retry 3 -I --cacert certs/root.crt https://proxy.goat.internal:8443
       - name: Run the tests
         run: go test .

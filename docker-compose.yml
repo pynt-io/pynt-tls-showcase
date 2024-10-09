@@ -1,6 +1,6 @@
 services:
   proxy:
-    image: nginx:stable
+    image: nginx:stable-alpine
     ports:
       - "8443:443"
     volumes:
