@@ -16,3 +16,23 @@ services:
       default:
         aliases:
           - proxy.goat.internal
+
+  pynt:
+    image: ghcr.io/pynt-io/pynt:v1-latest
+    ports:
+      - "6666:6666"
+      - "5001:5001"
+    environment:
+      - PYNT_ID
+      - PYNT_SAAS_URL=https://api.pynt.io/v1
+    command:
+      - proxy
+      - --host-ca
+      - certs/root.crt
+      - --ca-path
+      - certs/root-with-key.pem
+    volumes:
+      - type: bind
+        source: ./certs/
+        target: /etc/pynt/certs/
+        read_only: true

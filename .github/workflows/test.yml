@@ -24,3 +24,30 @@ jobs:
         run: python3 -m pip install --upgrade pyntcli
       - name: Run the tests
         run: pynt command --captured-domains '*' --application-id $PYNT_APP_ID --host-ca certs/root.crt --ca-path certs/root-with-key.pem --cmd 'go test -v .'
+
+  test-with-standalone:
+    name: Test with Pynt as a Standalone Container
+    runs-on: ubuntu-latest
+    env:
+      PYNT_ID: ${{ secrets.YOURPYNTID }}
+      PYNT_APP_ID: d348bd9b-dff5-42c8-9fb3-34d3d6762ea9
+      PYNT_SERVER_URL: http://localhost:5001
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+      - name: Run all compose services
+        run: |
+          docker compose up -d
+          curl -s --max-time 2 --retry 3 --retry-all-errors ${PYNT_SERVER_URL}/healthcheck
+      - name: Start Pynt's Proxy
+        id: pynt-scan
+        run: echo scan_id=`curl -X PUT ${PYNT_SERVER_URL}/api/proxy/start | jq -r .scanId` > "$GITHUB_OUTPUT"
+      - name: Run the tests
+        env:
+          HTTPS_PROXY: http://localhost:6666
+        run: go test -v .
+      - name: Mark test as completed
+        run: |
+          curl -X PUT ${PYNT_SERVER_URL}/api/proxy/stop -d '{"scanId":"${{ steps.pynt-scan.outputs.scan_id }}","applicationId":"${PYNT_APP_ID}"}' -H "Content-Type: application/json"
