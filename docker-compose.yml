@@ -2,7 +2,7 @@ services:
   proxy:
     image: nginx:stable-alpine
     ports:
-      - "8443:443"
+      - "8443:8443"
     volumes:
       - type: bind
         source: ./proxy/nginx.conf
@@ -12,3 +12,7 @@ services:
         source: ./certs/
         target: /etc/nginx/certs
         read_only: true
+    networks:
+      default:
+        aliases:
+          - proxy.goat.internal

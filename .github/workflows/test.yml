@@ -3,7 +3,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  test-with-pynt-cli:
+    name: Test with pynt-cli
     runs-on: ubuntu-latest
     env:
       PYNT_ID: ${{ secrets.YOURPYNTID }}
@@ -16,7 +17,7 @@ jobs:
       - name: Setup and start the proxy
         run: |
           echo '127.0.0.1 proxy.goat.internal' | sudo tee -a /etc/hosts
-          docker compose up -d
+          docker compose up proxy -d
       - name: Verify the proxy is running with a custom CA
         run: curl --retry-all-errors --retry 3 -I --cacert certs/root.crt https://proxy.goat.internal:8443
       - name: Install pynt cli
