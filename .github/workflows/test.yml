@@ -32,6 +32,7 @@ jobs:
       PYNT_ID: ${{ secrets.YOURPYNTID }}
       PYNT_APP_ID: d348bd9b-dff5-42c8-9fb3-34d3d6762ea9
       PYNT_SERVER_URL: http://localhost:5001
+      PYNT_SCAN_REPORT: scan-report.html
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -51,3 +52,25 @@ jobs:
       - name: Mark test as completed
         run: |
           curl -X PUT ${PYNT_SERVER_URL}/api/proxy/stop -d '{"scanId":"${{ steps.pynt-scan.outputs.scan_id }}","applicationId":"${PYNT_APP_ID}"}' -H "Content-Type: application/json"
+      - name: Retrieve the scan report
+        run: |
+          tries_left=3
+          while true; do
+            status_code=$(curl -o ${PYNT_SCAN_REPORT} -s -w "%{http_code}" ${PYNT_SERVER_URL}/api/report?scanId=${{ steps.pynt-scan.outputs.scan_id }})
+            if [[ "$status_code" -eq 200 ]]; then
+              break
+            fi
+            tries_left=$((tries_left-1))
+            if [[ "$tries_left" -eq 0 ]]; then
+              echo "Exhausted all attempts to retreive the scan log"
+              exit 1
+            fi
+            sleep 10
+          done
+          echo Scan report saved to ${PYNT_SCAN_REPORT}
+          ls -lha ${PYNT_SCAN_REPORT}
+      - name: Store the scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: scan-report
+          path: ${{ env.PYNT_SCAN_REPORT }}
