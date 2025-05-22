@@ -1,6 +1,7 @@
 services:
   proxy:
     image: nginx:stable-alpine
+    profiles: ["tls"]
     ports:
       - "8443:8443"
     volumes:
@@ -17,8 +18,28 @@ services:
         aliases:
           - proxy.goat.internal
 
+  proxy-mtls:
+    image: nginx:stable-alpine
+    profiles: ["mtls"]
+    ports:
+      - "8443:8443"
+    volumes:
+      - type: bind
+        source: ./proxy/nginx.mtls.conf
+        target: /etc/nginx/conf.d/default.conf
+        read_only: true
+      - type: bind
+        source: ./certs/
+        target: /etc/nginx/certs
+        read_only: true
+    networks:
+      default:
+        aliases:
+          - proxy.goat.internal
+
   pynt:
     image: ghcr.io/pynt-io/pynt:v1-latest
+    profiles: ["tls"]
     ports:
       - "6666:6666"
       - "5001:5001"
