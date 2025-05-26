@@ -10,6 +10,9 @@ on:
 jobs:
   test-mtls:
     runs-on: ubuntu-latest
+    env:
+      PYNT_ID: ${{ secrets.YOURPYNTID }}
+      PYNT_APP_ID: d348bd9b-dff5-42c8-9fb3-34d3d6762ea9
     steps:
       - uses: actions/checkout@v4
 
