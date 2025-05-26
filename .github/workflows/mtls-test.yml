@@ -24,7 +24,9 @@ jobs:
           echo "$HOME/.pynt/bin" >> $GITHUB_PATH
 
       - name: Start MTLS services
-        run: docker compose --profile mtls up -d
+        run: |
+          echo '127.0.0.1 proxy.goat.internal' | sudo tee -a /etc/hosts
+          docker compose --profile mtls up -d
 
       - name: Wait for nginx
         run: |
