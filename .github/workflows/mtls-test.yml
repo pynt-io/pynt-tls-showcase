@@ -40,12 +40,12 @@ jobs:
         run: |
           pynt newman --collection collection/goat-mtls.postman_collection.json \
             --environment collection/goat-mtls.postman_environment.json \
-            --ssl-client-cert certs/client-bundle.pem \
-            --ssl-client-key certs/client.key \
-            --ca-path certs/root.crt
-            --verbose 
-            --no-remove-logs 
-            --no-upload-logs
+            --tls-client-cert certs/client-bundle.pem \
+            --tls-client-key certs/client.key \
+            --ca-path certs/root.crt \
+            --verbose \
+            --no-remove-logs \
+            --no-upload-logs 
 
       - name: Test we received the expected result
         run: |
