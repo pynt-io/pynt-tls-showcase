@@ -42,7 +42,7 @@ jobs:
             --environment collection/goat-mtls.postman_environment.json \
             --tls-client-cert certs/client-bundle.pem \
             --tls-client-key certs/client.key \
-            --ca-path certs/root.crt \
+            --host-ca certs/root.crt \
             --verbose \
             --no-remove-logs \
             --no-upload-logs 
