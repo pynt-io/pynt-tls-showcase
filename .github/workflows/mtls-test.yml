@@ -42,7 +42,6 @@ jobs:
       - name: Run MTLS tests
         run: |
           pynt newman --collection collection/goat-mtls.postman_collection.json \
-            --environment collection/goat-mtls.postman_environment.json \
             --tls-client-cert certs/client-bundle.pem \
             --tls-client-key certs/client.key \
             --host-ca certs/root.crt \
