@@ -1,0 +1,70 @@
+name: MTLS Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test-mtls:
+    runs-on: ubuntu-latest
+    env:
+      PYNT_ID: ${{ secrets.YOURPYNTID }}
+      PYNT_APP_ID: d348bd9b-dff5-42c8-9fb3-34d3d6762ea9
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Pynt Binary
+        run: |
+          wget https://cdn.pynt.io/binary-release/install.sh
+          chmod +x install.sh
+          ./install.sh
+          echo "$HOME/.pynt/bin" >> $GITHUB_PATH
+
+      - name: Start MTLS services
+        run: |
+          echo '127.0.0.1 proxy.goat.internal' | sudo tee -a /etc/hosts
+          docker compose --profile mtls up -d
+
+      - name: Wait for nginx
+        run: |
+          for i in {1..30}; do
+            if curl -k https://localhost:8443/mtls-health >/dev/null 2>&1; then
+              echo "Nginx is up!"
+              exit 0
+            fi
+            echo "Waiting for nginx... ($i/30)"
+            sleep 1
+          done
+          echo "Nginx failed to start"
+          exit 1
+
+      - name: Run MTLS tests
+        run: |
+          pynt newman --collection collection/goat-mtls.postman_collection.json \
+            --tls-client-cert certs/client-bundle.pem \
+            --tls-client-key certs/client.key \
+            --host-ca certs/root.crt \
+            --verbose \
+            --no-remove-logs \
+            --no-upload-logs 
+
+      - name: Test we received the expected result
+        run: |
+          # jq on ~/.pynt/results/result.json to make sure "warnings" array is not empty
+          warnings=$(jq '.warnings | length' < ~/.pynt/results/results.json)
+
+          echo "Warnings: $warnings"
+
+          if [ "$warnings" -eq 0 ]; then
+            echo "Warnings were not found"
+            exit 1
+          fi
+
+          echo "Warnings were found, command ran successfully!"
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down 

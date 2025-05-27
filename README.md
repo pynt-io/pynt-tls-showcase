@@ -49,6 +49,25 @@ cat certs/proxy-goat-internal.crt certs/root.crt > certs/proxy-goat-internal-bun
 cat certs/root.crt certs/root.key > certs/root-with-key.pem
 ```
 
+### Client Certificate
+```bash
+# Generate client private key
+openssl genrsa -out certs/client.key 2048
+
+# Generate client CSR using the client.cnf configuration
+openssl req -new -key certs/client.key -out certs/client.csr -config certs/client.cnf
+
+# Sign client certificate with CA
+openssl x509 -req -in certs/client.csr -CA certs/root.crt -CAkey certs/root.key -CAcreateserial -out certs/client.crt -days 365 -sha256
+```
+
+### Certificate Verification
+
+```bash
+# Verify client certificate
+openssl verify -CAfile certs/root.crt certs/client.crt
+```
+
 ### Using a Custom CA for HTTP(s) calls in in Go
 
 ```golang
@@ -61,10 +80,18 @@ if ok := rootCAs.AppendCertsFromPEM(cert); !ok {
     return nil, fmt.Errorf("unable to create a root CA list")
 }
 
-tls_config := &tls.Config{
+tlsConfig := &tls.Config{
     InsecureSkipVerify: false,
     RootCAs:            rootCAs,
 }
+
+// If you want to use a client certificate, you can load it like this:
+clientCert, err := tls.LoadX509KeyPair("path/to/client-cert.pem", "path/to/client-key.pem")
+if err != nil {
+    return nil, fmt.Errorf("unable to load client cert: %w", err)
+}
+tlsConfig.Certificates = []tls.Certificate{clientCert}
+
 transport := &http.Transport{
     TLSClientConfig: tls_config,
     Proxy:           http.ProxyFromEnvironment, // Same as `http.DefaultTransport`
@@ -72,3 +99,52 @@ transport := &http.Transport{
 
 client := &http.Client{Transport: transport}
 ```
+
+## Switching Between TLS and MTLS
+
+The proxy can be configured to use either regular TLS (server authentication only) or MTLS (mutual TLS, requiring client certificates) using Docker Compose profiles:
+
+- `tls` profile: Regular TLS (server authentication only)
+- `mtls` profile: MTLS (requires client certificates)
+
+To switch between configurations:
+
+1. Stop the current services:
+   ```bash
+   docker compose down
+   ```
+
+2. Start the desired configuration:
+   ```bash
+   # For regular TLS:
+   docker compose --profile tls up -d
+   
+   # For MTLS:
+   docker compose --profile mtls up -d
+   ```
+
+### Testing the Configuration
+
+- For regular TLS: Any HTTPS client can connect to the server
+- For MTLS: Clients must present a valid client certificate signed by our CA
+  ```bash
+  # Test MTLS with curl using client certificate
+  curl --cacert certs/root.crt \
+       --cert certs/client-bundle.pem \
+       --key certs/client.key \
+       https://proxy.goat.internal:8443/mtls-health
+  ```
+
+### Running Tests with Newman
+
+The repository includes a Postman collection and environment for testing both TLS and MTLS configurations:
+
+```bash
+# Test MTLS configuration
+pynt newman run collection/goat-mtls.postman_collection.json \
+  --environment collection/goat-mtls.postman_environment.json \
+  --ssl-client-cert certs/client-bundle.pem \
+  --ssl-client-key certs/client.key \
+  --ssl-ca-cert certs/root.crt
+```
+
