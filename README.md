@@ -141,10 +141,9 @@ The repository includes a Postman collection and environment for testing both TL
 
 ```bash
 # Test MTLS configuration
-pynt newman run collection/goat-mtls.postman_collection.json \
-  --environment collection/goat-mtls.postman_environment.json \
-  --ssl-client-cert certs/client-bundle.pem \
-  --ssl-client-key certs/client.key \
-  --ssl-ca-cert certs/root.crt
+  pynt newman --collection collection/goat-mtls.postman_collection.json \
+    --tls-client-cert certs/client-bundle.pem \
+    --tls-client-key certs/client.key \
+    --host-ca certs/root.crt \
 ```
 
